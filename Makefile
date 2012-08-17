@@ -6,7 +6,7 @@ all:	$(SOBJ)
 
 $(SOBJ): c/prosqlite.o
 	mkdir -p $(PACKSODIR)
-	$(LD) $(LDSOFLAGS) -o $@ $(LIBS) $(SWISOLIB) $<
+	$(LD) $(LDSOFLAGS) -o $@ $(SWISOLIB) $< $(LIBS)
 
 check::
 install::
