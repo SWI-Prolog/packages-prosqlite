@@ -1,5 +1,5 @@
 name(prosqlite).
-version('0.0.4').
+version('0.0.5').
 title('Interface to SQLite').
 keywords([sqlite, database,sql]).
 author( 'Sander Canisius', 'http://bioinformatics.nki.nl/~canisius' ).

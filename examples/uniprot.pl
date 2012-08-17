@@ -16,7 +16,13 @@ uniprot :-
      write( As-T ), nl,
      Q = 'Select secondary_accession From secondary_accessions Where primary_accession="~w"',
      findall( Row, sqlite_format_query( uniprot, Q-'P64943', Row ), Rows ),
-     write(rows_for(T):Rows), nl.
+     write(rows_for(T):Rows), nl,
+     sqlite_version( Ver, Date ),
+     write( v:Ver ), nl,
+     write( d:Date ), nl, nl,
+     sqlite_citation( AtmCite, _B ),
+     write( citation ), nl,
+     write( AtmCite ), nl.
 
 /** uniprot.
 

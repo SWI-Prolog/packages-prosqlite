@@ -19,7 +19,7 @@
 
 :- dynamic( sqlite_connection/3 ).
 
-/** <module>  Prosqlite: a Prolog interface to the SQLite database system.
+/** <module>  proSQLite: a Prolog interface to the SQLite database system.
 
 This library follows the design and borrows code from the ODBC library of SWI-Prolog 
 http://www.swi-prolog.org/pldoc/package/odbc.html .
@@ -36,7 +36,7 @@ If you use prosqlite in your research, please consider citing the publications
 pointed to by sqlite_citation/2.
 
 
-     @version 0.0.4, 2012/08/16
+     @version 0.0.5, 2012/08/17
      @license	Perl Artistic License
      @author Sander Canisius
      @author Nicos Angelopoulos
@@ -46,7 +46,7 @@ pointed to by sqlite_citation/2.
      @see http://www.sqlite.org/
      @see files in examples/ directory
      @see also available as a SWI pack http://www.swi-prolog.org/pack/list
-     @see sources at http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.4.tgz
+     @see sources at http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.5.tgz
 
 
 */
@@ -57,7 +57,7 @@ pointed to by sqlite_citation/2.
 %% sqlite_version( -Version, -Date ).
 %  The current version. Version is a Mj:Mn:Fx term, and date is a date(Y,M,D) term.
 %
-sqlite_version( 0:0:4, date(2012,08,16) ).
+sqlite_version( 0:0:5, date(2012,08,17) ).
 
 %% sqlite_citation( -Atom, -Bibterm ).
 % Succeeds once for each publication related to this library. Atom is the atom representation
