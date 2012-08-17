@@ -1,0 +1,216 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html version="-//W3C//DTD HTML 4.0 Transitional//EN">
+  <head>
+    <title>prosqlite.pl</title>
+    <link href="pldoc.css" rel="stylesheet" type="text/css">
+    <meta
+	http-equiv="content-type"
+	content="text/html; charset=UTF-8">
+  </head>
+  <body>
+    <div class="navhdr">
+      <div class="jump">
+	<div>
+	  <a
+	      class="prolog_version"
+	      href="http://www.swi-prolog.org"
+	      shape="rect"> SWI-Prolog 6.1.12</a>
+	</div>
+      </div>
+      <div class="search">
+      </div>
+      <br clear="right">
+    </div>
+    <h1 class="file">prosqlite.pl -- Prosqlite: a Prolog interface to the SQLite database system.</h1>
+    <p>This library follows the design and borrows code from the ODBC library of SWI-Prolog
+<a
+	href="http://www.swi-prolog.org/pldoc/package/odbc.html"
+	shape="rect">http://www.swi-prolog.org/pldoc/package/odbc.html</a> .
+</p>
+    <p>The SQLite system is a powerful zero-configuration management systme that interacts
+with single-file databases that are cross-platform compatible binaries.
+</p>
+    <p>Prosqlite provides three layers of interaction with SQLite databases.
+At the lower level is the querrig via SQL statements. A second layer
+allows the interogation of the database dictionary, and the final level
+facilitates the viewing of database tables as predicates.
+See the publications for further details via <a
+	href="/doc_for?object=prosqlite:sqlite_citation/2"
+	shape="rect">sqlite_citation/2</a>.
+If you use prosqlite in your research, please consider citing the publications
+pointed to by <a
+	href="/doc_for?object=prosqlite:sqlite_citation/2"
+	shape="rect">sqlite_citation/2</a>.
+</p>
+    <dl class="tags">
+      <dt class="keyword-author">author</dt>
+      <dd class="keyword-author">- Sander Canisius</dd>
+      <dd class="keyword-author">- Nicos Angelopoulos</dd>
+      <dt class="keyword-version">version</dt>
+      <dd class="keyword-version">- 0.0.4, 2012/08/16</dd>
+      <dt class="keyword-see">See also</dt>
+      <dd class="keyword-see">- Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels. Exploring file based databases via an Sqlite interface. ICLP Workshop on Logic-based methods in Programming Environments (September, 2012. Budapest, Hungary).</dd>
+      <dd class="keyword-see">- <a
+	  href="http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf"
+	  shape="rect">http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf</a></dd>
+      <dd class="keyword-see">- <a
+	  href="http://bioinformatics.nki.nl/~nicos/sware/prosqlite"
+	  shape="rect">http://bioinformatics.nki.nl/~nicos/sware/prosqlite</a></dd>
+      <dd class="keyword-see">- <a href="http://www.sqlite.org/" shape="rect">http://www.sqlite.org/</a></dd>
+      <dd class="keyword-see">- files in examples/ directory</dd>
+      <dd class="keyword-see">- also available as a SWI pack <a href="http://www.swi-prolog.org/pack/list" shape="rect">http://www.swi-prolog.org/pack/list</a></dd>
+      <dd class="keyword-see">- sources at <a
+	  href="http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.4.tgz"
+	  shape="rect">http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.4.tgz</a></dd>
+    </dl>
+    <dl>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_version/2" shape="rect">
+	  <b class="pred">sqlite_version</b>
+	  <var class="arglist">(-Version, -Date)</var>
+	</a>
+      </dt>
+      <dd class="defbody">The current version. <var>Version</var> is a Mj:Mn:Fx term, and date is a data(Y,M,D) term.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_citation/2" shape="rect">
+	  <b class="pred">sqlite_citation</b>
+	  <var class="arglist">(-Atom, -Bibterm)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Succeeds once for each publication related to this library. <var>Atom</var> is the atom representation
+suitable for printing while <var>Bibterm</var> is a bibtex(Type,Key,Pairs) term of the same publication.
+Produces all related publications on backtracking.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_connect/2" shape="rect">
+	  <b class="pred">sqlite_connect</b>
+	  <var class="arglist">(+File, ?Connection)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Open a connection to an sqlite <var>File</var>. If <var>Connection</var> is a variable, an opaque atom
+is generated, otherwise the opened file is connected to handle Connecction.
+
+<pre class="code">  sqlite_connect('uniprot.sqlite', uniprot).</pre>
+</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_connect/3" shape="rect">
+	  <b class="pred">sqlite_connect</b>
+	  <var class="arglist">(+File, ?Connection, +Options)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Open a connection to an sqlite <var>File</var>. If <var>Connection</var> is a variable, an opaque atom
+is generated, otherwise the opened file is connected to hanlde Connecction.
+<var>Options</var> is a sinlge term or a list of terms from the following:
+<ul>
+	<li>alias(Atom) identify the connection as Alias in all transactions</li>
+	<li>as_predicates(Boolean) if true, create hook predicates that map
+
+<center>each sqlite table to a prolog predicate.
+These are created in module user, and it is
+the user's responsibility to be unique in this module.</center>
+</li>
+	<li>at_module(AtMod) the module at which the predicates will be asserted at
+(if as_predicates(true)) is also given). Default is =<code>user</code>=.</li>
+	<li>exists(Boolean) do not throw an error if file does not exist and
+
+<center>Boolean is false. Default is true and an error is
+thrown if the Sqlite file does not exist.</center>
+</li>
+      </ul></dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_current_connection/1" shape="rect">
+	  <b class="pred">sqlite_current_connection</b>
+	  <var class="arglist">(-Connection)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Return or interrogate the name of open connection handles.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_default_connection/1" shape="rect">
+	  <b class="pred">sqlite_default_connection</b>
+	  <var class="arglist">(-Connection)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Return or interrogate the name of the default connection. This is the
+last connection opened.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_query/2" shape="rect">
+	  <b class="pred">sqlite_query</b>
+	  <var class="arglist">(+Sql, -Row)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Post an <var>Sql</var> query to default connection and get row result in <var>Row</var>.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_query/3" shape="rect">
+	  <b class="pred">sqlite_query</b>
+	  <var class="arglist">(+Connection, +Sql, -Row)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Post an <var>Sql</var> query to Sqlite <var>Connection</var> and get row result in <var>Row</var>.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_format_query/3" shape="rect">
+	  <b class="pred">sqlite_format_query</b>
+	  <var class="arglist">(+Connection, +FAs, -Row)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Post a format style Sql query to Sqlite <var>Connection</var> and get row result in <var>Row</var>.
+<var>FAs</var> is a - pair structure : Format-Arguments.
+
+<pre class="code">   sqlite_format_query(uniprot, 'PRAGMA table_info(~w)'-Table, row(_, Column, _, _, _, _))</pre>
+</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_current_table/2" shape="rect">
+	  <b class="pred">sqlite_current_table</b>
+	  <var class="arglist">(+Connection, -Table)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Return or interrogate tables in the Sqlite database associated with <var>Connection</var>.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_current_table/3" shape="rect">
+	  <b class="pred">sqlite_current_table</b>
+	  <var class="arglist">(+Connection, ?Table, -Facet)</var>
+	</a>
+      </dt>
+      <dd class="defbody"><var>Facet</var> is a property of <var>Table</var> found at <var>Connection</var>. Currently only arity(Arity) is
+delivered.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_table_column/3" shape="rect">
+	  <b class="pred">sqlite_table_column</b>
+	  <var class="arglist">(+Connection, ?Table, -Column)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Return or interrogate tables and columns in the Sqlite database associated with <var>Connection</var>.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_table_count/3" shape="rect">
+	  <b class="pred">sqlite_table_count</b>
+	  <var class="arglist">(+Connection, +Table, -Count)</var>
+	</a>
+      </dt>
+      <dd class="defbody">True if <var>Count</var> is the number of rows in Sqlite <var>Connection</var> associated <var>Table</var>.</dd>
+    </dl>
+    <h2 class="undoc">Undocumented predicates</h2>
+    <p>The following predicates are exported, but not or incorrectly documented.
+</p>
+    <dl class="undoc">
+      <dt class="undoc">
+	<span style="float:right"></span>
+	<a name="sqlite_disconnect/1" shape="rect">
+	  <b class="pred">sqlite_disconnect</b>
+	  <var class="arglist">(Arg1)</var>
+	</a>
+      </dt>
+    </dl>
+  </body>
+</html>
