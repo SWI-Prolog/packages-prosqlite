@@ -3,6 +3,7 @@
 #include <SWI-Prolog.h>
 
 #include <stdio.h>
+#include <stdbool.h>
 
 atom_t row_atom;
 functor_t minus2_functor;
@@ -32,7 +33,7 @@ static foreign_t c_sqlite_connect(term_t filename, term_t connection)
 
   if (PL_get_atom_chars(filename, &filename_c))
   {
-    printf("%s\n", filename_c);
+    printf("Using database at: %s\n", filename_c);
     sqlite3* handle;
     if (sqlite3_open(filename_c, &handle) == SQLITE_OK)
     {
@@ -45,7 +46,7 @@ static foreign_t c_sqlite_connect(term_t filename, term_t connection)
 }
 
 
-static foreign_t pl_sqlite_disconnect(term_t connection)
+static foreign_t c_sqlite_disconnect(term_t connection)
 {
   sqlite3* db;
   if (PL_get_blob(connection, (void**)&db, 0, 0))
@@ -192,6 +193,8 @@ static foreign_t c_sqlite_query(term_t connection, term_t query, term_t row,
 {
   sqlite3* db;
   query_context* context;
+  term_t tmp = PL_new_term_ref();
+  int changes = 0;
 
   switch (PL_foreign_control(handle))
   {
@@ -208,19 +211,42 @@ static foreign_t c_sqlite_query(term_t connection, term_t query, term_t row,
 
     PL_free(query_c);
 
+    bool recurrent = false;
     switch (sqlite3_step(statement))
     {
     case SQLITE_ROW:
       context = new_query_context(statement);
+      recurrent = true;
       if ( unify_row_term(row, context) )
 	PL_retry_address(context);
       /*FALLTHROUGH*/
     case SQLITE_DONE:
-      free_query_context(context);
-      PL_fail;
+       if (recurrent) 
+         {
+            free_query_context(context);
+            PL_fail;
+         } else
+         {
+
+            int what = sqlite3_column_count(statement);
+            if (what) {    /* >0 means statement is supposed to return results */
+               PL_fail;
+            }
+               else   {    /* statement is a INSERT/DELETE/UPDATE which do not return anything */
+                     context = new_query_context(statement);
+                     changes = sqlite3_changes(db);
+                     if (PL_unify_term(tmp,PL_FUNCTOR_CHARS,"affected",1,PL_INT64, (int)changes))
+                        if( !PL_unify(row,tmp) )
+                           { free_query_context(context);
+                              PL_fail;}
+                     free_query_context(context);
+               PL_succeed;
+            };
+         }
     }
 
   case PL_REDO:
+    
     context = PL_foreign_context_address(handle);
     switch (sqlite3_step(context->statement))
     {
@@ -249,7 +275,7 @@ install_t install_prosqlite()
   minus2_functor = PL_new_functor(PL_new_atom("-"), 2);
 
   PL_register_foreign("c_sqlite_connect", 2, c_sqlite_connect, 0);
-  PL_register_foreign("sqlite_disconnect", 1, pl_sqlite_disconnect, 0);
+  PL_register_foreign("c_sqlite_disconnect", 1, c_sqlite_disconnect, 0);
   PL_register_foreign("c_sqlite_query", 3, c_sqlite_query,
 		      PL_FA_NONDETERMINISTIC);
 }

@@ -6,6 +6,11 @@
             sqlite_query/2,             % +SQL, -Row
             sqlite_query/3,             % +Conn, +SQL, -Row
             sqlite_format_query/3,      % +Conn, +SQL, -Row
+            sqlite_assert/1,            % +Goal
+            sqlite_assert/2,            % +Conn, +Goal
+            sqlite_retractall/2,        % +Goal
+            sqlite_retractall/2,        % +Goal, -Affected
+            sqlite_retractall/3,        % +Conn, +Goal, -Affected
             sqlite_current_table/2,     % +Conn, -Table
             sqlite_current_table/3,     % +Conn, ?Table, -Facet
             sqlite_table_column/3,      % +Conn, ?Table, ?Column
@@ -35,18 +40,29 @@ See the publications for further details via sqlite_citation/2.
 If you use prosqlite in your research, please consider citing the publications
 pointed to by sqlite_citation/2.
 
+The library has been developed and tested for SWI 6.3.0 but it should 
+also work on YAP Prolog.
 
-     @version 0.0.5, 2012/08/17
+The easiest way to install on SWI is via the package manager. 
+If you can compile C-code, then simply do 
+==
+     ?- pack_install( prosqlite ).
+==
+And you are good to go.
+
+
+
+     @version 0.0.6, 2012/09/27
      @license	Perl Artistic License
      @author Sander Canisius
      @author Nicos Angelopoulos
-     @see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels.  Exploring file based databases via an Sqlite interface.  ICLP Workshop on Logic-based methods in Programming Environments (September, 2012. Budapest, Hungary).
+     @see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels.  Exploring file based databases via an Sqlite interface.  In the ICLP Workshop on Logic-based methods in Programming Environments, p. 2-9, (2012, Budapest, Hungary).
      @see http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf
      @see http://bioinformatics.nki.nl/~nicos/sware/prosqlite
      @see http://www.sqlite.org/
      @see files in examples/ directory
      @see also available as a SWI pack http://www.swi-prolog.org/pack/list
-     @see sources at http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.5.tgz
+     @see sources at http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.6.tgz
 
 
 */
@@ -57,24 +73,26 @@ pointed to by sqlite_citation/2.
 %% sqlite_version( -Version, -Date ).
 %  The current version. Version is a Mj:Mn:Fx term, and date is a date(Y,M,D) term.
 %
-sqlite_version( 0:0:5, date(2012,08,17) ).
+sqlite_version( 0:0:6, date(2012,09,27) ).
 
 %% sqlite_citation( -Atom, -Bibterm ).
 % Succeeds once for each publication related to this library. Atom is the atom representation
 % suitable for printing while Bibterm is a bibtex(Type,Key,Pairs) term of the same publication.
 % Produces all related publications on backtracking.
 sqlite_citation( Atom, bibtex(Type,Key,Pairs) ) :-
-     Atom = 'Exploring file based databases via an Sqlite interface. \n Canisius Sander, Nicos Angelopoulos and Lodewyk Wessels \n ICLP Workshop on Logic-based methods in Programming Environments (September, 2012. Budapest, Hungary).',
+     Atom = 'Exploring file based databases via an Sqlite interface. \n Canisius Sander, Nicos Angelopoulos and Lodewyk Wessels \n In the ICLP Workshop on Logic-based methods in Programming Environments (WLPE\'12),\n p.2-9, 2012. Budapest, Hungary.',
      Type = inproceedings,
      Key  = 'CanisiusS+2012',
      Pairs = [
-          author - 'Sander Canisius and Nicos Angelopoulos and Lodewyk Wessels',
-          title  - 'Exploring file based databases via an Sqlite interface',
-          booktitle - 'ICLP Workshop on Logic-based methods in Programming Environments',
-          year - 2012,
-          month - 'September',
+          author = 'Sander Canisius and Nicos Angelopoulos and Lodewyk Wessels',
+          title  = 'Exploring file based databases via an Sqlite interface',
+          booktitle = 'In ICLP Workshop on Logic-based methods in Programming Environments (WLPE\'12)',
+          year = 2012,
+          pages= '2-9',
+          month = 'September',
           address = 'Budapest, Hungary'
      ].
+
 
 %% sqlite_connect(+File, ?Connection).
 %
@@ -92,7 +110,7 @@ sqlite_connect(File, Conn) :-
 %% sqlite_connect(+File, ?Connection, +Options).
 %
 %  Open a connection to an sqlite File. If Connection is a variable, an opaque atom
-%  is generated, otherwise the opened file is connected to hanlde Connecction.
+%  is generated, otherwise the opened file is connected to handle Connecction.
 %  Options is a sinlge term or a list of terms from the following:
 %
 %         * alias(Atom)     identify the connection as Alias in all transactions
@@ -103,7 +121,7 @@ sqlite_connect(File, Conn) :-
 %                                   the user's responsibility to be unique in this module.
 %
 %         * at_module(AtMod)        the module at which the predicates will be asserted at
-%                                   (if as_predicates(true)) is also given). Default is ==user==.
+%                                   (if as_predicates(true)) is also given). Default is =|user|=.
 %
 %         * exists(Boolean)         do not throw an error if file does not exist and
 %                                   Boolean is false. Default is true and an error is
@@ -141,6 +159,18 @@ sqlite_connect(File, Conn, Opts) :-
      !,
      assert( sqlite_connection(Conn,File,Internal) ). 
      */
+
+%% sqlite_disconnect( +Alias ).
+%
+%  Terminate the connection to a SQLite database file.
+%
+%  ==
+%    sqlite_disconnect(uniprot).
+%  ==
+%
+sqlite_disconnect( Alias ) :-
+     once( sqlite_connection(Alias,_,Conn) ),
+     c_sqlite_disconnect( Conn ).
 
 %% sqlite_current_connection(-Connection).
 %
@@ -225,6 +255,84 @@ sqlite_table_count(Alias, Table, Count) :-
 	sqlite_format_query(Alias, Sel-Table, row(Count)),
      !.
 
+/** sqlite_retractall( Goal ).
+     
+     Run sqlite_retractall/3 with the default connetion as the first argument,
+     and surpression the third argument.
+*/
+sqlite_retractall( Goal ) :-
+     sqlite_default_connection( Conn ),
+     sqlite_retractall( Conn, Goal, _Affected ).
+
+/** sqlite_retractall( +Goal, -Affected ).
+     
+     Apply sqlite_retractall/3 with the default connection as the first argument.
+
+*/
+sqlite_retractall( Goal, Aff ) :-
+     sqlite_default_connection( Conn ),
+     sqlite_retractall( Conn, Goal, Aff ).
+
+/** sqlite_retractall( +Alias, +Goal, -Affected ).
+
+     Remove all rows that correspond to the table from SQLite database identified by Alias
+     and is named by Goal's name. The arity of Goal should also match the arity of the table
+     to be deleted. Ground arguments are added to the Where part of the DELETE SQL statement
+     at their respective column locations.
+
+     ==
+          sqlite_retractall( uniprot, secondary_accessions(_,'P64943'), A ).
+     ==
+      
+*/
+sqlite_retractall( Conn, Goal, Affected ) :-
+     functor( Goal, Name, _Arity ),
+     findall( Col, sqlite_table_column(Conn,Name,Col), Cols ),
+     findall( C-A, (arg(N,Goal,A),ground(A),nth1(N,Cols,C)), CAs ),
+     sql_clm_value_pairs_to_where( CAs, Where ),
+     sqlite_retractall_where( Where, Conn, Name, Affected ).
+
+sqlite_retractall_where( '', Conn, Name, 0 ) :-
+     !,
+     write( user_error, 'Refusing to delete whole connection/table':Conn/Name ), 
+     nl( user_error ),
+     fail.
+sqlite_retractall_where( Where, Conn, Name, Affected ) :-
+     Del = 'Delete from',
+     atomic_list_concat( [Del,Name,Where], ' ', Sql ),
+     sqlite_query( Conn, Sql, Row ),
+     Row = affected(Affected).
+
+/** sqlite_assert( Goal ).
+
+     Run =|sqlite( Default, Goal )|= with the Default SQLite connection
+*/
+
+sqlite_assert( Goal ) :-
+     sqlite_default_connection( Conn ),
+     sqlite_assert( Conn, Goal ).
+     
+/** sqlite_assert( Con, Goal ).
+
+     Assert a single row to the table with the same name as Goal's functor. 
+     The arity of Goal should also match the arity of the table.
+     Goal should be ground.
+
+==
+     sqlite_assert( uniprot, secondary_accessions('Q10706','P64943') ).
+==
+*/
+sqlite_assert( Conn, Goal ) :-
+     ground( Goal ),
+     functor( Goal, Name, _Arity ),
+     findall( Col, sqlite_table_column(Conn,Name,Col), Cols ),
+     Ins = 'Insert into ',
+     Goal =.. [_|Args],
+     maplist( dquote, Args, Qals ),
+     atomic_list_concat( Qals, ',', Vals ),
+     atomic_list_concat( Cols, ',', Cnms ),
+     atomic_list_concat( [Ins,Name,' (',Cnms,') Values ','(',Vals,')'], Insert ),
+     sqlite_query( Conn, Insert, _Res ).
 
 %-Section non-interface sqlite specific predicates
 %
@@ -279,6 +387,8 @@ to_list(OptIn, Opts) :-
      Opts = OptIn.
 to_list(Opt, [Opt] ).
 
+dquote( Val, Quoted ) :-
+     atomic_list_concat( ['"',Val,'"'], Quoted ).
 
 sql_clm_value_pairs_to_where(Known, Where) :-
      sql_clm_value_pairs_to_where_conjunction(Known, Conjunction),

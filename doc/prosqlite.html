@@ -15,14 +15,14 @@
 	  <a
 	      class="prolog_version"
 	      href="http://www.swi-prolog.org"
-	      shape="rect"> SWI-Prolog 6.1.12</a>
+	      shape="rect"> SWI-Prolog 6.3.0</a>
 	</div>
       </div>
       <div class="search">
       </div>
       <br clear="right">
     </div>
-    <h1 class="file">prosqlite.pl -- Prosqlite: a Prolog interface to the SQLite database system.</h1>
+    <h1 class="file">prosqlite.pl -- proSQLite: a Prolog interface to the SQLite database system.</h1>
     <p>This library follows the design and borrows code from the ODBC library of SWI-Prolog
 <a
 	href="http://www.swi-prolog.org/pldoc/package/odbc.html"
@@ -43,14 +43,23 @@ pointed to by <a
 	href="/doc_for?object=prosqlite:sqlite_citation/2"
 	shape="rect">sqlite_citation/2</a>.
 </p>
+    <p>The library has been developed and tested for SWI 6.3.0 but it should
+also work on YAP Prolog.
+</p>
+    <p>The easiest way to install on SWI is via the package manager.
+If you can compile C-code, then simply do
+</p>
+    <pre class="code">     ?- pack_install( prosqlite ).</pre>
+    <p>And you are good to go.
+</p>
     <dl class="tags">
       <dt class="keyword-author">author</dt>
       <dd class="keyword-author">- Sander Canisius</dd>
       <dd class="keyword-author">- Nicos Angelopoulos</dd>
       <dt class="keyword-version">version</dt>
-      <dd class="keyword-version">- 0.0.4, 2012/08/16</dd>
+      <dd class="keyword-version">- 0.0.6, 2012/09/27</dd>
       <dt class="keyword-see">See also</dt>
-      <dd class="keyword-see">- Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels. Exploring file based databases via an Sqlite interface. ICLP Workshop on Logic-based methods in Programming Environments (September, 2012. Budapest, Hungary).</dd>
+      <dd class="keyword-see">- Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels. Exploring file based databases via an Sqlite interface. In the ICLP Workshop on Logic-based methods in Programming Environments, p. 2-9, (2012, Budapest, Hungary).</dd>
       <dd class="keyword-see">- <a
 	  href="http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf"
 	  shape="rect">http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf</a></dd>
@@ -61,8 +70,10 @@ pointed to by <a
       <dd class="keyword-see">- files in examples/ directory</dd>
       <dd class="keyword-see">- also available as a SWI pack <a href="http://www.swi-prolog.org/pack/list" shape="rect">http://www.swi-prolog.org/pack/list</a></dd>
       <dd class="keyword-see">- sources at <a
-	  href="http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.4.tgz"
-	  shape="rect">http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.4.tgz</a></dd>
+	  href="http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.6.tgz"
+	  shape="rect">http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.6.tgz</a></dd>
+      <dt class="keyword-license">license</dt>
+      <dd class="keyword-license">- Perl Artistic License</dd>
     </dl>
     <dl>
       <dt class="pubdef">
@@ -72,7 +83,7 @@ pointed to by <a
 	  <var class="arglist">(-Version, -Date)</var>
 	</a>
       </dt>
-      <dd class="defbody">The current version. <var>Version</var> is a Mj:Mn:Fx term, and date is a data(Y,M,D) term.</dd>
+      <dd class="defbody">The current version. <var>Version</var> is a Mj:Mn:Fx term, and date is a date(Y,M,D) term.</dd>
       <dt class="pubdef">
 	<span style="float:right"></span>
 	<a name="sqlite_citation/2" shape="rect">
@@ -103,7 +114,7 @@ is generated, otherwise the opened file is connected to handle Connecction.
 	</a>
       </dt>
       <dd class="defbody">Open a connection to an sqlite <var>File</var>. If <var>Connection</var> is a variable, an opaque atom
-is generated, otherwise the opened file is connected to hanlde Connecction.
+is generated, otherwise the opened file is connected to handle Connecction.
 <var>Options</var> is a sinlge term or a list of terms from the following:
 <ul>
 	<li>alias(Atom) identify the connection as Alias in all transactions</li>
@@ -114,13 +125,24 @@ These are created in module user, and it is
 the user's responsibility to be unique in this module.</center>
 </li>
 	<li>at_module(AtMod) the module at which the predicates will be asserted at
-(if as_predicates(true)) is also given). Default is =<code>user</code>=.</li>
+(if as_predicates(true)) is also given). Default is <code>user</code>.</li>
 	<li>exists(Boolean) do not throw an error if file does not exist and
 
 <center>Boolean is false. Default is true and an error is
 thrown if the Sqlite file does not exist.</center>
 </li>
       </ul></dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_disconnect/1" shape="rect">
+	  <b class="pred">sqlite_disconnect</b>
+	  <var class="arglist">(+Alias)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Terminate the connection to a SQLite database file.
+
+<pre class="code">  sqlite_disconnect(uniprot).</pre>
+</dd>
       <dt class="pubdef">
 	<span style="float:right"></span>
 	<a name="sqlite_current_connection/1" shape="rect">
@@ -199,18 +221,51 @@ delivered.</dd>
 	</a>
       </dt>
       <dd class="defbody">True if <var>Count</var> is the number of rows in Sqlite <var>Connection</var> associated <var>Table</var>.</dd>
-    </dl>
-    <h2 class="undoc">Undocumented predicates</h2>
-    <p>The following predicates are exported, but not or incorrectly documented.
-</p>
-    <dl class="undoc">
-      <dt class="undoc">
+      <dt class="pubdef">
 	<span style="float:right"></span>
-	<a name="sqlite_disconnect/1" shape="rect">
-	  <b class="pred">sqlite_disconnect</b>
-	  <var class="arglist">(Arg1)</var>
+	<a name="sqlite_retractall/2" shape="rect">
+	  <b class="pred">sqlite_retractall</b>
+	  <var class="arglist">(+Goal, -Affected)</var>
 	</a>
       </dt>
+      <dd class="defbody">Apply <a
+	  href="/doc_for?object=prosqlite:sqlite_retractall/3"
+	  shape="rect">sqlite_retractall/3</a> with the default connection as the first argument.</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_retractall/3" shape="rect">
+	  <b class="pred">sqlite_retractall</b>
+	  <var class="arglist">(+Alias, +Goal, -Affected)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Remove all rows that correspond to the table from SQLite database identified by <var>Alias</var>
+and is named by <var>Goal</var>'s name. The arity of <var>Goal</var> should also match the arity of the table
+to be deleted. Ground arguments are added to the Where part of the DELETE SQL statement
+at their respective column locations.
+
+<pre class="code">     sqlite_retractall( uniprot, secondary_accessions(_,'P64943'), A ).</pre>
+</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_assert/1" shape="rect">
+	  <b class="pred">sqlite_assert</b>
+	  <var class="arglist">(Goal)</var>
+	</a>
+      </dt>
+      <dd class="defbody">Run <code>sqlite( Default, Goal )</code> with the Default SQLite connection</dd>
+      <dt class="pubdef">
+	<span style="float:right"></span>
+	<a name="sqlite_assert/2" shape="rect">
+	  <b class="pred">sqlite_assert</b>
+	  <var class="arglist">(Con, Goal)</var>
+	</a>
+      </dt>
+      <dd class="defbody">
+	<blockquote>Assert a single row to the table with the same name as <var>Goal</var>'s functor.
+The arity of <var>Goal</var> should also match the arity of the table.
+<var>Goal</var> should be ground.</blockquote>
+	<pre class="code">     sqlite_assert( uniprot, secondary_accessions('Q10706','P64943') ).</pre>
+      </dd>
     </dl>
   </body>
 </html>
