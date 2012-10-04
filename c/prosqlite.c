@@ -52,9 +52,15 @@ static foreign_t c_sqlite_disconnect(term_t connection)
   if (PL_get_blob(connection, (void**)&db, 0, 0))
   {
     if (sqlite3_close(db) == SQLITE_OK)
-      PL_succeed;
+      { 
+         PL_succeed;
+      }  else {
+         printf("SQLite returned error at closing database \n");
+         PL_fail;
+         };
   }
 
+  printf("could not get connection to close \n");
   PL_fail;
 }
 
@@ -184,7 +190,7 @@ int get_query_string(term_t tquery, char** query)
   if (PL_is_functor(tquery, minus2_functor))
     return formatted_string(tquery, query);
   else
-    return PL_get_chars(tquery, query, CVT_ATOM|CVT_STRING|BUF_MALLOC);
+    return PL_get_chars(tquery, query, CVT_ATOM|CVT_STRING|BUF_MALLOC|REP_UTF8);
 }
 
 
@@ -204,6 +210,7 @@ static foreign_t c_sqlite_query(term_t connection, term_t query, term_t row,
     char* query_c;
     sqlite3_stmt* statement;
     if (!get_query_string(query, &query_c))
+
       PL_fail;
 
     if (sqlite3_prepare(db, query_c, -1, &statement, 0) != SQLITE_OK)
@@ -230,6 +237,7 @@ static foreign_t c_sqlite_query(term_t connection, term_t query, term_t row,
 
             int what = sqlite3_column_count(statement);
             if (what) {    /* >0 means statement is supposed to return results */
+               sqlite3_finalize(statement);
                PL_fail;
             }
                else   {    /* statement is a INSERT/DELETE/UPDATE which do not return anything */

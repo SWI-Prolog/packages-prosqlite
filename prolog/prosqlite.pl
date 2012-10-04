@@ -8,7 +8,7 @@
             sqlite_format_query/3,      % +Conn, +SQL, -Row
             sqlite_assert/1,            % +Goal
             sqlite_assert/2,            % +Conn, +Goal
-            sqlite_retractall/2,        % +Goal
+            sqlite_retractall/1,        % +Goal
             sqlite_retractall/2,        % +Goal, -Affected
             sqlite_retractall/3,        % +Conn, +Goal, -Affected
             sqlite_current_table/2,     % +Conn, -Table
@@ -27,7 +27,7 @@
 /** <module>  proSQLite: a Prolog interface to the SQLite database system.
 
 This library follows the design and borrows code from the ODBC library of SWI-Prolog 
-http://www.swi-prolog.org/pldoc/package/odbc.html .
+http://www.swi-prolog.org/pldoc/packasqlite_connectge/odbc.html .
 
 The SQLite system is a powerful zero-configuration management systme that interacts
 with single-file databases that are cross-platform compatible binaries.
@@ -170,7 +170,8 @@ sqlite_connect(File, Conn, Opts) :-
 %
 sqlite_disconnect( Alias ) :-
      once( sqlite_connection(Alias,_,Conn) ),
-     c_sqlite_disconnect( Conn ).
+     c_sqlite_disconnect( Conn ),
+     retractall( sqlite_connection(Alias,_,Conn) ).
 
 %% sqlite_current_connection(-Connection).
 %
@@ -367,17 +368,32 @@ sqlite_establish_tables([Name-Columns|T], Conn, Mod) :-
      sqlite_establish_tables(T, Conn, Mod).
      
 sqlite_holds(Conn, Name, _Arity, Columns, Args) :-
-     findall(C-V, (nth1(N,Args,V),ground(V),nth1(N,Columns,C)), KnwnClmPrs),
+     pl_args_column_arg_ground_or_not_pairs( Args, Columns, KnwnClmPrs, UnKnwnCs, UnKnwnAs ),
+     % findall(C-V, (nth1(N,Args,V),ground(V),nth1(N,Columns,C)), KnwnClmPrs),
      sql_clm_value_pairs_to_where(KnwnClmPrs, Where),
-     SelStar = 'Select * from',
-     atomic_list_concat( [SelStar,Name,Where], ' ', Sql ),
-     % write( sql(Sql) ), nl,
-     Row =.. [row|Args],
+     % SelStar = 'Select ( from',
+     % atomic_list_concat( [SelStar,Name,Where], ' ', Sql ),
+     atomic_list_concat( UnKnwnCs, ',', UnC ),
+     atomic_list_concat( ['Select ',UnC,'From',Name,Where], ' ', Sql ),
+     Row =.. [row|UnKnwnAs],
      c_sqlite_query(Conn, Sql, Row).
 
 sqlite_alias_connection(Alias, Connection) :-
      sqlite_connection(Alias,_,Connection),
      !.
+
+pl_args_column_arg_ground_or_not_pairs( [], [], [], [], [] ).
+pl_args_column_arg_ground_or_not_pairs( [A|As], [C|Cs], Knwn, UnCs, UnAs ) :-
+     ( ground(A) -> 
+          Knwn = [C-A|TKnwn],
+          TUnCs = UnCs,
+          TUnAs = UnAs
+          ;
+          TKnwn = Knwn,
+          UnCs = [C|TUnCs],
+          UnAs = [A|TUnAs]
+     ),
+     pl_args_column_arg_ground_or_not_pairs( As, Cs, TKnwn, TUnCs, TUnAs ).
 
 %-Section sqlite non-specific auxiliary predicates 
 %
@@ -387,6 +403,10 @@ to_list(OptIn, Opts) :-
      Opts = OptIn.
 to_list(Opt, [Opt] ).
 
+dquote( Val, Quoted ) :-
+     number( Val ), 
+     !,
+     Quoted = Val.
 dquote( Val, Quoted ) :-
      atomic_list_concat( ['"',Val,'"'], Quoted ).
 
