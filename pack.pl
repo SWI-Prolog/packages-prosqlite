@@ -7,4 +7,4 @@ author( 'Nicos Angelopoulos', 'http://bioinformatics.nki.nl/~nicos' ).
 packager( 'Nicos Angelopoulos', 'http://bioinformatics.nki.nl/~nicos' ).
 maintainer( 'Nicos Angelopoulos', 'http://bioinformatics.nki.nl/~nicos' ).
 home( 'http://bioinformatics.nki.nl/~nicos/sware/prosqlite' ).
-download( 'http://bioinformatics.nki.nl/~nicos/sware/packs/prolite-*.tgz' ).
+download( 'http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-*.tgz' ).

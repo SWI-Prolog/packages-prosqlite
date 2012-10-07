@@ -16,10 +16,10 @@
             sqlite_table_column/3,      % +Conn, ?Table, ?Column
             sqlite_table_count/3,       % +Conn, +Table, -Count
             sqlite_default_connection/1,% -Conn
+            sqlite_date_sql_atom/2,     % ?Date, ?SqlAtom
             sqlite_version/2,           % -Version, -Date
             sqlite_citation/2           % -Atom, Bibterm
           ]).
-
 :- load_foreign_library(foreign(prosqlite)).
 
 :- dynamic( sqlite_connection/3 ).
@@ -52,7 +52,7 @@ And you are good to go.
 
 
 
-     @version 0.0.6, 2012/09/27
+     @version 0.0.6, 2012/10/06
      @license	Perl Artistic License
      @author Sander Canisius
      @author Nicos Angelopoulos
@@ -73,7 +73,7 @@ And you are good to go.
 %% sqlite_version( -Version, -Date ).
 %  The current version. Version is a Mj:Mn:Fx term, and date is a date(Y,M,D) term.
 %
-sqlite_version( 0:0:6, date(2012,09,27) ).
+sqlite_version( 0:0:6, date(2012,10,06) ).
 
 %% sqlite_citation( -Atom, -Bibterm ).
 % Succeeds once for each publication related to this library. Atom is the atom representation
@@ -334,6 +334,22 @@ sqlite_assert( Conn, Goal ) :-
      atomic_list_concat( Cols, ',', Cnms ),
      atomic_list_concat( [Ins,Name,' (',Cnms,') Values ','(',Vals,')'], Insert ),
      sqlite_query( Conn, Insert, _Res ).
+
+/** sqlite_date_sql_atom( Date, Sql ).
+
+Convert between  a Prolog date/3 term and an Sql atom. 
+The conversion is bidirectional.
+*/
+sqlite_date_sql_atom( date(Y,M,D), Sql ) :-
+     ground( Sql ), 
+     !,
+     atomic_list_concat( Consts, '/', Sql ),
+     maplist( atom_number, Consts, [Y,M,D] ).
+sqlite_date_sql_atom( date(Y,M,D), Sql ) :-
+     atomic_list_concat( ['"',Y], Ya ),
+     atomic_list_concat( [D,'"'], Da ),
+     atomic_list_concat( [Ya,M,Da], '/', Sql ).
+
 
 %-Section non-interface sqlite specific predicates
 %

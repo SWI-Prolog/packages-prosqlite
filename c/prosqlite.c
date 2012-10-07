@@ -42,6 +42,7 @@ static foreign_t c_sqlite_connect(term_t filename, term_t connection)
     }
   }
 
+  PL_free(filename_c);
   PL_fail;
 }
 
@@ -181,6 +182,9 @@ int formatted_string(term_t in, char** out)
   }
   Sclose(fd);
 
+    if (*out)
+      PL_free(*out);
+
   return TRUE;
 }
 
@@ -194,6 +198,7 @@ int get_query_string(term_t tquery, char** query)
 }
 
 
+// Jan says "You must call PL_free() on the query strings after you are done with them!"
 static foreign_t c_sqlite_query(term_t connection, term_t query, term_t row,
 				 control_t handle)
 {
@@ -210,11 +215,15 @@ static foreign_t c_sqlite_query(term_t connection, term_t query, term_t row,
     char* query_c;
     sqlite3_stmt* statement;
     if (!get_query_string(query, &query_c))
-
-      PL_fail;
+      { 
+         PL_free(query_c);
+         PL_fail;
+      };
 
     if (sqlite3_prepare(db, query_c, -1, &statement, 0) != SQLITE_OK)
-      return raise_sqlite_exception(db);
+      { PL_free(query_c);
+        return raise_sqlite_exception(db);
+      }
 
     PL_free(query_c);
 
