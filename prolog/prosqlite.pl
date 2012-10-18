@@ -6,23 +6,23 @@
             sqlite_query/2,             % +SQL, -Row
             sqlite_query/3,             % +Conn, +SQL, -Row
             sqlite_format_query/3,      % +Conn, +SQL, -Row
-            sqlite_assert/1,            % +Goal
-            sqlite_assert/2,            % +Conn, +Goal
-            sqlite_retractall/1,        % +Goal
-            sqlite_retractall/2,        % +Goal, -Affected
-            sqlite_retractall/3,        % +Conn, +Goal, -Affected
             sqlite_current_table/2,     % +Conn, -Table
             sqlite_current_table/3,     % +Conn, ?Table, -Facet
             sqlite_table_column/3,      % +Conn, ?Table, ?Column
+            sqlite_table_column/4,      % +Conn, ?Table, ?Column, -Facet
             sqlite_table_count/3,       % +Conn, +Table, -Count
             sqlite_default_connection/1,% -Conn
             sqlite_date_sql_atom/2,     % ?Date, ?SqlAtom
+            sqlite_pragma/3,            % ?Date, ?SqlAtom
             sqlite_version/2,           % -Version, -Date
+            sqlite_binary_version/2,    % -Version, -Date
             sqlite_citation/2           % -Atom, Bibterm
-          ]).
+          ] ).
+
 :- load_foreign_library(foreign(prosqlite)).
 
 :- dynamic( sqlite_connection/3 ).
+:- dynamic( sqlite_db:sqlite_asserted/4 ).
 
 /** <module>  proSQLite: a Prolog interface to the SQLite database system.
 
@@ -32,16 +32,16 @@ http://www.swi-prolog.org/pldoc/packasqlite_connectge/odbc.html .
 The SQLite system is a powerful zero-configuration management systme that interacts
 with single-file databases that are cross-platform compatible binaries.
 
-Prosqlite provides three layers of interaction with SQLite databases.
-At the lower level is the querrig via SQL statements. A second layer 
+ProSQLite provides three layers of interaction with SQLite databases.
+At the lower level is the querying via SQL statements. A second layer 
 allows the interogation of the database dictionary, and the final level
 facilitates the viewing of database tables as predicates.
-See the publications for further details via sqlite_citation/2.
-If you use prosqlite in your research, please consider citing the publications
-pointed to by sqlite_citation/2.
+See the publication pointed to by sqlite_citation/2, for further details.
+If you use prosqlite in your research, please consider citing this publication.
 
-The library has been developed and tested for SWI 6.3.0 but it should 
+The library has been developed and tested on SWI 6.3.2 but it should 
 also work on YAP Prolog.
+
 
 The easiest way to install on SWI is via the package manager. 
 If you can compile C-code, then simply do 
@@ -50,22 +50,70 @@ If you can compile C-code, then simply do
 ==
 And you are good to go.
 
+There are good/full examples in the sources, directory examples/.
+For instance test by :
+==
+     ?- [predicated].
+     ?- predicated.
+==
+
+There is a sister package, db_facts (also installable via the manager).
+Db_facts, allow interaction with the underlying database via Prolog terms,
+That library can also be used as a common compatibility layer for the ODBC
+and proSQLite libraries of SWI-Prolog, as it works on both type of connections.
 
 
-     @version 0.0.6, 2012/10/06
+ProSQLite is debug/1 aware: call =|debug(sqlite)|= to see what is sent to 
+the sqlite engine.
+
+There are MS wins DLLs included  in the sources. However the package manager of SWI 6.3.2 
+cannot currently cope with these. The DLLs are at the correct location so with any luck the
+next version of the manager will install these correctly.
+
+In the meantime, take the sources from 
+==
+http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.1.0.tgz
+or
+http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.1.0.zip
+==
+
+and 
+
+if you run a 32 bit prolog do, 
+
+     * copy the dll files  from  lib/i386-win32/ to swipl/bin/
+     * and prolog file prolog/prosqlite.pl to swipl/library/
+
+
+If you are running  a 64 bit SWI executable do: 
+     * copy the dll files  from  lib/i386-win32/ to swipl/bin/
+     * and prolog file prolog/prosqlite.pl to swipl/library/
+
+That's it.
+
+
+     @version 0.1.0, 2012/10/17
      @license	Perl Artistic License
-     @author Sander Canisius
      @author Nicos Angelopoulos
+     @author Sander Canisius
      @see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels.  Exploring file based databases via an Sqlite interface.  In the ICLP Workshop on Logic-based methods in Programming Environments, p. 2-9, (2012, Budapest, Hungary).
      @see http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf
      @see http://bioinformatics.nki.nl/~nicos/sware/prosqlite
+     @see http://bioinformatics.nki.nl/~nicos/sware/db_facts
      @see http://www.sqlite.org/
      @see files in examples/ directory
      @see also available as a SWI pack http://www.swi-prolog.org/pack/list
-     @see sources at http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.0.6.tgz
+     @see sources at http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.1.0.tgz
 
+     @tbd set pragmas
 
 */
+
+:- use_module( library(debug) ).
+:- at_halt( sqlite_disconnect ).
+
+/* defaults and start ups */
+arity_flag_values( [arity,unary,both,palette] ).
 
 %-Section interface predicates
 %
@@ -73,7 +121,15 @@ And you are good to go.
 %% sqlite_version( -Version, -Date ).
 %  The current version. Version is a Mj:Mn:Fx term, and date is a date(Y,M,D) term.
 %
-sqlite_version( 0:0:6, date(2012,10,06) ).
+sqlite_version( 0:1:0, date(2012,10,17) ).
+
+%% sqlite_binary_version( -Version, -Date ).
+%  The current version of the binaries. If the installed binaries are not compiled from
+%  the sources, then this might be different (=older) that the sqlite Porlog source version
+%  returned by sqlite_version/2. Version is a Mj:Mn:Fx term, and date is a date(Y,M,D) term.
+%
+sqlite_binary_version( Ver, Date ) :-
+     c_sqlite_version( Ver, Date ).
 
 %% sqlite_citation( -Atom, -Bibterm ).
 % Succeeds once for each publication related to this library. Atom is the atom representation
@@ -90,14 +146,15 @@ sqlite_citation( Atom, bibtex(Type,Key,Pairs) ) :-
           year = 2012,
           pages= '2-9',
           month = 'September',
-          address = 'Budapest, Hungary'
+          address = 'Budapest, Hungary',
+          url     = 'http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf'
      ].
 
 
-%% sqlite_connect(+File, ?Connection).
+%% sqlite_connect(+File, ?Alias).
 %
-%  Open a connection to an sqlite File. If Connection is a variable, an opaque atom
-%  is generated, otherwise the opened file is connected to handle Connecction.
+%  Open a connection to an sqlite File. If Alias is a variable, an opaque atom
+%  is generated and unified to it. The opened db connection to  file can be accessed via Alias.
 %
 %  ==
 %    sqlite_connect('uniprot.sqlite', uniprot).
@@ -106,29 +163,84 @@ sqlite_citation( Atom, bibtex(Type,Key,Pairs) ) :-
 sqlite_connect(File, Conn) :-
      sqlite_connect(File, Conn, []).
 
+/** sqlite_connect(+File, ?Connection, +Options).
 
-%% sqlite_connect(+File, ?Connection, +Options).
-%
-%  Open a connection to an sqlite File. If Connection is a variable, an opaque atom
-%  is generated, otherwise the opened file is connected to handle Connecction.
-%  Options is a sinlge term or a list of terms from the following:
-%
-%         * alias(Atom)     identify the connection as Alias in all transactions
-%
-%         * as_predicates(Boolean)  if true, create hook predicates that map
-%                                   each sqlite table to a prolog predicate.
-%                                   These are created in module user, and it is 
-%                                   the user's responsibility to be unique in this module.
-%
-%         * at_module(AtMod)        the module at which the predicates will be asserted at
-%                                   (if as_predicates(true)) is also given). Default is =|user|=.
-%
-%         * exists(Boolean)         do not throw an error if file does not exist and
-%                                   Boolean is false. Default is true and an error is
-%                                   thrown if the Sqlite file does not exist.
-%
-sqlite_connect(File, Conn, OptIn) :-
+Open a connection to an sqlite File. If Connection is a variable, an opaque atom
+is generated, otherwise the opened file is connected to handle Connecction.
+Options is a sinlge term or a list of terms from the following:
+
+        * alias(Atom)             identify the connection as Alias in all transactions
+
+        * as_predicates(AsPred)   if true, create hook predicates that map
+                                  each sqlite table to a prolog predicate.
+                                  These are created in module user, and it is 
+                                  the user's responsibility to be unique in this module.
+
+        * at_module(AtMod)        the module at which the predicates will be asserted at
+                                  (if as_predicates(true)) is also given). Default is =|user|=.
+
+        * table_as(Table,Pname,Arity)   map the table to predicate with name Pname. Arity should be
+                                  defined for this representaition as per with_arity() option.
+
+        * arity(arity)            Arity denotes the arity of access clauses to be added in the prolog database that
+                                  correspond to SQLite tables. The default is =|arity|=, which asserts a 
+                                  predicate matching the arity of the table.
+                                  =|both|= adds two predicates, one matching the arity and a single argument one.
+                                  The later can be interrogated with something like
+                                  == 
+                                   ?-  phones( [name=naku, telephone=T] ).
+                                  ==
+                                  =|unary|= only adds the unary version, and =|palette|= adds a suite of predicates
+                                  with arities from 1 to N, where N is the number of columns.
+                                  These can be interrogated by :
+                                  == 
+                                   ?-  phones( name=Name ).
+                                   ?-  phones( name=naku, telephone=T ).
+                                   ?-  phones( [name=naku, telephone=T] ).
+                                  ==
+                                  
+                                  Predicated tables can be used to insert values to the database by virtue of all
+                                  their columns are give ground values.
+
+        * exists(Boolean)         do not throw an error if file does not exist and
+                                  Boolean is false. Default is true and an error is
+                                  thrown if the Sqlite file does not exist.
+
+        * ext(Ext)                database files are assumed to have an sqlite extension at their end.
+                                  To ovewrite this give Ext ('' for no extension).
+
+When unary predicates are defined the columns can be interrogated/accessed by list pairs of the form Column=Value.
+Column-Value and Column:Value are also recognised. 
+
+So for example, for table =|phones|= with columns Name, Address and Phone, prosqlite will add 
+
+==
+     phones(_,_,_) 
+==
+
+     as a response to as_predicates, and
+     
+==
+     phones(_)  
+==
+if Arity is =|unary|=
+
+The latter can be interrogated by 
+
+==
+     phones( ['Name'=naku','Phone'=Phone] ).
+==
+which will return the phone number(s) associated with individual named by =|naku|=.
+
+
+See source file examples/predicated.pl .
+
+     */
+
+sqlite_connect(FileIn, Conn, OptIn) :-
      to_list( OptIn, Opts ),
+     ( memberchk(ext(Ext),Opts) -> true; Ext=sqlite ),
+     ( file_name_extension(_,Ext,FileIn) -> File=FileIn; file_name_extension(FileIn,Ext,File) ),
      sqlite_connect_1(File, Conn, Opts).
 
 sqlite_connect_1(File, _Conn, Opts) :-
@@ -142,16 +254,26 @@ sqlite_connect_1(File1, Conn, Opts) :-
      sqlite_connection(Conn,File2,_),
      !,
      ( File1==File2 -> 
-          write( connection_already_open(Conn) ), nl
+          print_message( informational, sqlite(connection_already_open(Conn)) )
           ;
-          write( connection_alias_in_use(Conn,File2) ), nl
-     ),
-     fail.
+          sqlite_error( alias_in_use(Conn,File2) )
+     ).
 sqlite_connect_1(File, Alias, Opts) :-
      sqlite_alias(Opts, Conn, Alias),
+     ( sqlite_connection(_Conn1,File,Alias1) ->
+          portray_message( informational, file_already_open(File,Alias1) )
+          ;
+          true
+     ),
      c_sqlite_connect(File, Conn),
      asserta( sqlite_connection(Alias,File,Conn) ),
-     sqlite_establish_predicates(Opts, Conn, Alias).
+     ( sqlite_establish_predicates(Opts, Conn) ->
+          true
+          ;
+          retractall( sqlite_connection(Alias,File,Conn) ),
+          c_sqlite_disconnect(Conn),
+          sqlite_error( predicated_creation_error(File,Alias) )
+     ).
 
 /*
 sqlite_connect(File, Conn, Opts) :-
@@ -160,6 +282,14 @@ sqlite_connect(File, Conn, Opts) :-
      assert( sqlite_connection(Conn,File,Internal) ). 
      */
 
+% this is currently private only for use with at_halt.
+% 
+sqlite_disconnect :-
+     sqlite_connection(Alias,_,_),
+     sqlite_disconnect( Alias ),
+     fail.
+sqlite_disconnect.
+     
 %% sqlite_disconnect( +Alias ).
 %
 %  Terminate the connection to a SQLite database file.
@@ -170,8 +300,21 @@ sqlite_connect(File, Conn, Opts) :-
 %
 sqlite_disconnect( Alias ) :-
      once( sqlite_connection(Alias,_,Conn) ),
+     !,
+     debug( sqlite, 'Disconnecting from db with alias: ~w.', [Alias] ),
      c_sqlite_disconnect( Conn ),
-     retractall( sqlite_connection(Alias,_,Conn) ).
+     retractall( sqlite_connection(Alias,_,Conn) ),
+     findall( pam(Pname,Arity,Mod), sqlite_db:sqlite_asserted(Conn,Pname,Arity,Mod), PAs ),
+     maplist( sqlite_clean_up_predicated_for(Conn), PAs ).
+
+sqlite_disconnect( Alias ) :-
+     sqlite_fail( not_a_connection(Alias) ).
+
+sqlite_clean_up_predicated_for( Conn, pam(Pname,Arity,Mod) ) :-
+     % functor( Head, Pname, Arity ),
+     % retractall( Mod:Head ),
+     abolish( Mod:Pname, Arity ),
+     retractall( sqlite_db:sqlite_asserted(Conn,Pname,Arity,Mod) ).
 
 %% sqlite_current_connection(-Connection).
 %
@@ -203,6 +346,7 @@ sqlite_query(Sql, Row) :-
 %
 sqlite_query(Alias, Query, Row) :-
      sqlite_alias_connection(Alias, Connection),
+     debug( sqlite, 'Alias: ~w, sending: ~a', [Alias,Query] ),
      c_sqlite_query(Connection, Query, Row).
 
 %% sqlite_format_query(+Connection, +FAs, -Row).
@@ -238,14 +382,57 @@ sqlite_current_table(Connection, Table, Facet ) :-
 %
 %  Return or interrogate tables and columns in the Sqlite database associated with Connection.
 %
-sqlite_table_column(Alias, Table, Column) :-
+sqlite_table_column( Alias, Table, Column ) :-
+     set_table( Alias, Table ),
+	sqlite_format_query(Alias, 'PRAGMA table_info(~w)'-Table, row(_, Column, _, _, _, _)).
+
+%% sqlite_table_column(+Connection, ?Table, ?Column, -Facet).
+%
+%   Facet is one of: 
+%    *  position(Nth0)    position of the Column in the table, first being 0.
+%    *  data_type(Dtype)  the data type for the column
+%    *  nullable(Null)    can this column be set to the null value
+%    *  defautl(Default)  the default value for the 
+%    *  primary_key(Key)  is this column part of the primary key ?
+%
+sqlite_table_column(Alias, Table, Column, Facet) :-
+     set_table( Alias, Table ),
+	sqlite_format_query(Alias, 'PRAGMA table_info(~w)'-Table, Row ),
+	Row = row(_, Column, _, _, _, _),
+     sqlite_pragma_info_facet( Row, Facet ).
+
+sqlite_pragma_info_facet( row(Nth0,_,_,_,_,_), position(Nth0) ).
+sqlite_pragma_info_facet( row(_,_,Dtype,_,_,_), data_type(Dtype) ).
+sqlite_pragma_info_facet( row(_,_,_,Null,_,_), nullable(Null) ).  % fixme, ensure same semantics as ODBC
+sqlite_pragma_info_facet( row(_,_,_,_,Default,_), default(Default) ).
+sqlite_pragma_info_facet( row(_,_,_,_,_,Key), primary_key(Key) ).
+
+%% sqlite_pragma( +Alias, +Pragma, -Row ).
+%
+%  Interrogate SQLite Pragmas. Currently only reading is supported.
+%  Pragma can be an atom or a - separated pair, as in =|table_info-TableName|=.
+% 
+%==
+%     sqlite_pragma( phone_db, encoding, Row).
+%==
+sqlite_pragma( Alias, Pragma-Par, Row ) :-
+     !,
+     atomic_list_concat( ['PRAGMA',Pragma,'(~w)'],' ', Query ), 
+	sqlite_format_query( Alias, Query-Par, Row ).
+sqlite_pragma( Alias, Pragma, Row ) :-
+     atomic_list_concat( ['PRAGMA',Pragma],' ', Query ), 
+	sqlite_query( Alias, Query, Row ).
+
+% pragmas_info( [...,encoding,...,secure_delete,synchronous,temp_store,writable_schema] ).
+pragmas_comm( [shrink_memory] ).
+
+
+set_table( Alias, Table ) :-
      ( var(Table) -> 
           sqlite_current_table(Alias, Table) 
           ;
           true
-     ),
-	sqlite_format_query(Alias, 'PRAGMA table_info(~w)'-Table, row(_, Column, _, _, _, _)).
-
+     ).
 
 %% sqlite_table_count(+Connection, +Table, -Count).
 % 
@@ -255,85 +442,6 @@ sqlite_table_count(Alias, Table, Count) :-
      Sel = 'Select count (*) from ~w',
 	sqlite_format_query(Alias, Sel-Table, row(Count)),
      !.
-
-/** sqlite_retractall( Goal ).
-     
-     Run sqlite_retractall/3 with the default connetion as the first argument,
-     and surpression the third argument.
-*/
-sqlite_retractall( Goal ) :-
-     sqlite_default_connection( Conn ),
-     sqlite_retractall( Conn, Goal, _Affected ).
-
-/** sqlite_retractall( +Goal, -Affected ).
-     
-     Apply sqlite_retractall/3 with the default connection as the first argument.
-
-*/
-sqlite_retractall( Goal, Aff ) :-
-     sqlite_default_connection( Conn ),
-     sqlite_retractall( Conn, Goal, Aff ).
-
-/** sqlite_retractall( +Alias, +Goal, -Affected ).
-
-     Remove all rows that correspond to the table from SQLite database identified by Alias
-     and is named by Goal's name. The arity of Goal should also match the arity of the table
-     to be deleted. Ground arguments are added to the Where part of the DELETE SQL statement
-     at their respective column locations.
-
-     ==
-          sqlite_retractall( uniprot, secondary_accessions(_,'P64943'), A ).
-     ==
-      
-*/
-sqlite_retractall( Conn, Goal, Affected ) :-
-     functor( Goal, Name, _Arity ),
-     findall( Col, sqlite_table_column(Conn,Name,Col), Cols ),
-     findall( C-A, (arg(N,Goal,A),ground(A),nth1(N,Cols,C)), CAs ),
-     sql_clm_value_pairs_to_where( CAs, Where ),
-     sqlite_retractall_where( Where, Conn, Name, Affected ).
-
-sqlite_retractall_where( '', Conn, Name, 0 ) :-
-     !,
-     write( user_error, 'Refusing to delete whole connection/table':Conn/Name ), 
-     nl( user_error ),
-     fail.
-sqlite_retractall_where( Where, Conn, Name, Affected ) :-
-     Del = 'Delete from',
-     atomic_list_concat( [Del,Name,Where], ' ', Sql ),
-     sqlite_query( Conn, Sql, Row ),
-     Row = affected(Affected).
-
-/** sqlite_assert( Goal ).
-
-     Run =|sqlite( Default, Goal )|= with the Default SQLite connection
-*/
-
-sqlite_assert( Goal ) :-
-     sqlite_default_connection( Conn ),
-     sqlite_assert( Conn, Goal ).
-     
-/** sqlite_assert( Con, Goal ).
-
-     Assert a single row to the table with the same name as Goal's functor. 
-     The arity of Goal should also match the arity of the table.
-     Goal should be ground.
-
-==
-     sqlite_assert( uniprot, secondary_accessions('Q10706','P64943') ).
-==
-*/
-sqlite_assert( Conn, Goal ) :-
-     ground( Goal ),
-     functor( Goal, Name, _Arity ),
-     findall( Col, sqlite_table_column(Conn,Name,Col), Cols ),
-     Ins = 'Insert into ',
-     Goal =.. [_|Args],
-     maplist( dquote, Args, Qals ),
-     atomic_list_concat( Qals, ',', Vals ),
-     atomic_list_concat( Cols, ',', Cnms ),
-     atomic_list_concat( [Ins,Name,' (',Cnms,') Values ','(',Vals,')'], Insert ),
-     sqlite_query( Conn, Insert, _Res ).
 
 /** sqlite_date_sql_atom( Date, Sql ).
 
@@ -362,41 +470,111 @@ sqlite_alias(_Opts, _Conn, Alias ) :-
      !.
 sqlite_alias(_Opts, Conn, Conn).
 
-sqlite_establish_predicates(Opts, Conn, Alias) :-
+sqlite_establish_predicates( Opts, Conn ) :-
      memberchk(as_predicates(true), Opts), 
      !,
-     findall(T-C, sqlite_table_column(Alias,T,C), TCs ),
+     findall(T-C, sqlite_table_column(Conn,T,C), TCs ),
      findall( T, member(T-_,TCs), RepTs ),
      sort( RepTs, Ts ),
      findall( T-Cs, (member(T,Ts),findall(C,member(T-C,TCs),Cs)), TdCs ),
      ( memberchk(at_module(Mod), Opts) -> true; Mod = user ),
-     sqlite_establish_tables(TdCs, Conn, Mod ).
-sqlite_establish_predicates(_Opts, _Conn, _Alias).
+     arity_option( Opts, ArityF ),
+     sqlite_establish_tables(TdCs, Conn, Mod, ArityF, Opts ).
+sqlite_establish_predicates(_Opts, _Conn ).
 
-sqlite_establish_tables([], _Conn, _Mod ).
-sqlite_establish_tables([Name-Columns|T], Conn, Mod) :-
-     length(Columns, Arity),
-     functor(Head, Name, Arity),
-     Head =..[Name|Args],
-     Body = prosqlite:sqlite_holds(Conn,Name,Arity,Columns,Args),
-     Mod:assert((Head :- Body)),
+sqlite_establish_tables( [], _Conn, _Mod, _ArityF, _Opts ).
+sqlite_establish_tables( [Table-Columns|T], Conn, Mod, ArityF, Opts ) :-
+     ( memberchk(table_as(Table,Pname,TArityF), Opts) ->
+          true
+          ;
+          Pname = Table, TArityF = ArityF
+     ), 
+     sqlite_establish_table(TArityF,Table,Pname,Columns,Conn,Mod),
+          % Internal = 'Internal prosqlite error. Unable to establish table',
+          % throw( Internal:TArityF/Table )  % handled furter up now
+     sqlite_establish_tables( T, Conn, Mod, ArityF, Opts ).
+
+sqlite_establish_table( arity, Table, Pname, Columns, Conn, Mod ) :-
+     length( Columns, Arity ),
+     sqlite_establish_table_typed( Table, Pname, Columns, Conn, Mod, predicate, Arity ).
+sqlite_establish_table( both, Table, Pname, Columns, Conn, Mod ) :-
+     sqlite_establish_table_typed( Table, Pname, Columns, Conn, Mod, unary, 1 ),
+     length( Columns, Arity ),
+     sqlite_establish_table_typed( Table, Pname, Columns, Conn, Mod, predicate, Arity ).
+sqlite_establish_table( unary, Table, Pname, Columns, Conn, Mod ) :-
+     sqlite_establish_table_typed( Table, Pname, Columns, Conn, Mod, unary, 1 ).
+sqlite_establish_table( palette, Table, Pname, Columns, Conn, Mod ) :-
+     length( Columns, Arity ),
+     % Shorter is Arity - 1,
+     findall( _, ( between(1,Arity,I), 
+                   sqlite_establish_table_typed(Table, Pname, Columns, Conn, Mod, palette, I)
+                 ), _ ).
+
+sqlite_establish_table_typed( Table, Pname, Columns, Conn, Mod, ArityF, Arity ) :-
+     functor( Head, Pname, Arity ),
+     Head =..[Pname|Args],
+     Body = prosqlite:sqlite_holds(Conn,Table,Arity,ArityF,Columns,Args),
+     ( clause(Mod:Head,_Body) ->
+          sqlite_fail( maps_to_existing_predicate(Pname,Arity) )
+          ;
+          true
+     ),
+     % retractall( Mod:Head ),   % fixme: double check this and test it works
+     ( sqlite_db:sqlite_asserted(Conn1,Pname,Args,_Mod1) ->
+          sqlite_fail( predicate_already_registered(Conn1,Pname,Arity) )
+          ;
+          Mod:assert((Head :- Body))
+     ),
+     assert( sqlite_db:sqlite_asserted(Conn,Pname,Arity,Mod) ).
      % assert((Head :- Body)),
-     sqlite_establish_tables(T, Conn, Mod).
-     
-sqlite_holds(Conn, Name, _Arity, Columns, Args) :-
-     pl_args_column_arg_ground_or_not_pairs( Args, Columns, KnwnClmPrs, UnKnwnCs, UnKnwnAs ),
-     % findall(C-V, (nth1(N,Args,V),ground(V),nth1(N,Columns,C)), KnwnClmPrs),
+
+sqlite_holds( AliasOr, Name, _Arity, Type, Columns, Args ) :-
+     sqlite_alias_connection( AliasOr, Conn ),
+     pl_as_predicate_to_sql_ready_data( Type, Columns, Args, KnwnClmPrs, UnKnwnCs, UnKnwnAs ),
+     sqlite_holds_unknown( UnKnwnCs, UnKnwnAs, KnwnClmPrs, Name, Columns, Conn ).
+
+/* fixme:
+sqlite_holds_unknown( [], _UnKnwnAs, KnwnClmPrs, Name, Columns, Conn ) :-
+     shall we throw an error if there is nothing to report and nothing to assert ?
+     */
+
+sqlite_holds_unknown( UnKnwnCs, UnKnwnAs, KnwnClmPrs, Name, _Columns, Conn ) :-
      sql_clm_value_pairs_to_where(KnwnClmPrs, Where),
-     % SelStar = 'Select ( from',
-     % atomic_list_concat( [SelStar,Name,Where], ' ', Sql ),
      atomic_list_concat( UnKnwnCs, ',', UnC ),
-     atomic_list_concat( ['Select ',UnC,'From',Name,Where], ' ', Sql ),
+     atomic_list_concat( ['Select ',UnC,'From',Name,Where,';'], ' ', Sql ),
      Row =.. [row|UnKnwnAs],
+     debug( sqlite, 'Conn: ~w, sending: ~a', [Conn,Sql] ),
      c_sqlite_query(Conn, Sql, Row).
 
-sqlite_alias_connection(Alias, Connection) :-
-     sqlite_connection(Alias,_,Connection),
+sqlite_alias_connection( Alias, Connection ) :-
+     sqlite_connection( Alias,_,Connection ),
      !.
+% allows access with either alias or connection :
+sqlite_alias_connection( Connection, Connection ) :-
+     sqlite_connection(_,_,Connection),
+     !.
+sqlite_alias_connection( Alias, _Connection ) :-
+     sqlite_error( unknown_alias(Alias) ).
+
+% fixme: we should really use the db_facts code here.
+pl_as_predicate_to_sql_ready_data( unary, Columns, [Args], KnwnClmPrs, UnKnwnCs, UnKnwnAs ) :-
+     pl_look_for_args_to_un_known( Args, Columns, KnwnClmPrs, UnKnwnCs, UnKnwnAs ).
+pl_as_predicate_to_sql_ready_data( palette, Columns, ArgsIn, KnwnClmPrs, UnKnwnCs, UnKnwnAs ) :-
+     ( (ArgsIn=[Args],is_list(Args)) -> true; Args = ArgsIn ),
+     pl_args_column_arg_ground_or_not_pairs(Args,Columns,KnwnClmPrs,UnKnwnCs,UnKnwnAs),
+     ( maplist(var,Args) ->
+          true % then a palette predicate has been called with full arity and all variables
+          ;
+          % maplist( look_for_pair,Args,_,_),
+          findall( LFA, (member(LFA,Args),look_for_pair_silent(LFA,_,_)), [] )
+          % then a palette predicate has been called with full arity and look_for_pair
+     ),
+     !.
+pl_as_predicate_to_sql_ready_data( palette, Columns, ArgsIn, KnwnClmPrs, UnKnwnCs, UnKnwnAs ) :-
+     ( (ArgsIn=[Args],is_list(Args)) -> true; Args = ArgsIn ),
+     pl_look_for_args_to_un_known( Args, Columns, KnwnClmPrs, UnKnwnCs, UnKnwnAs ).
+pl_as_predicate_to_sql_ready_data( predicate, Columns, Args, KnwnClmPrs, UnKnwnCs, UnKnwnAs ) :-
+     pl_args_column_arg_ground_or_not_pairs( Args, Columns, KnwnClmPrs, UnKnwnCs, UnKnwnAs ).
 
 pl_args_column_arg_ground_or_not_pairs( [], [], [], [], [] ).
 pl_args_column_arg_ground_or_not_pairs( [A|As], [C|Cs], Knwn, UnCs, UnAs ) :-
@@ -411,6 +589,95 @@ pl_args_column_arg_ground_or_not_pairs( [A|As], [C|Cs], Knwn, UnCs, UnAs ) :-
      ),
      pl_args_column_arg_ground_or_not_pairs( As, Cs, TKnwn, TUnCs, TUnAs ).
 
+pl_look_for_args_to_un_known( [], _Columns, [], [], [] ).
+pl_look_for_args_to_un_known( [A|As], Columns, Knwn, UnKnwnCs, UnKnownAs ) :-
+     look_for_pair( A, Clm, Val ),
+     is_one_of_columns( Clm, Columns ),
+     ( ground(Val) ->
+          Knwn = [Clm-Val|TKnwn],
+          TUnKnwnCs = UnKnwnCs,
+          TUnKnownAs = UnKnownAs
+          ;
+          TKnwn = Knwn,
+          UnKnwnCs = [Clm|TUnKnwnCs],
+          UnKnownAs = [Val|TUnKnownAs]
+     ),
+     pl_look_for_args_to_un_known( As, Columns, TKnwn, TUnKnwnCs, TUnKnownAs ).
+
+is_one_of_columns( Clm, Columns ) :-
+     memberchk( Clm, Columns ), 
+     !.
+is_one_of_columns( Clm, Columns ) :-
+     sqlite_error( unknown_column(Clm,Columns) ).
+
+look_for_pair( Pair, K, V ) :-
+     look_for_pair_silent( Pair, K, V ),
+     !.
+look_for_pair( Term, _A, _B ) :-
+	% print_message(informational, pack(git_fetch(Dir))).
+     sqlite_error( pair_representation(Term) ).
+     % type_error( 'Binary compound with functor {=,-,:}', Term ). 
+     % Type = 'Binary compound with functor {=,-,:}',
+     % print_message( error, error(type_error(Type,Term)) ),
+     % abort.
+
+look_for_pair_silent( A=B, A, B ).
+look_for_pair_silent( A-B, A, B ).
+look_for_pair_silent( A:B, A, B ).
+
+/* error messages */
+
+sqlite_error( Term ) :-
+     Type = error,
+     print_message( Type, sqlite(Term) ),
+     abort.
+
+sqlite_fail( Term ) :-
+     Type = informational,
+     sqlite_fail( Type, Term ).
+
+sqlite_fail( Type, Term ) :-
+     print_message( Type, sqlite(Term) ),
+     fail.
+
+%-Section error handling.
+
+:- multifile prolog:message//1.
+
+prolog:message(sqlite(Message)) -->
+	message(Message).
+
+
+message( pair_representation(Term) ) -->
+     ['Wrong term type ~q in predicated table arguments. Expected binary with functor, {=,:,-}.' - [Term] ].
+message( unknown_column(Clm,Columns) ) -->
+     [ 'Unkown column, ~q expected one in ~q.' - [Clm,Columns] ].
+message( unknown_alias(Alias) ) -->
+     ['Not a known alias or connection:~q.' - Alias ].
+message( wrong_arity_value(ArityF) ) -->
+     { arity_flag_values( Arities ) },
+     [ 'Unrecognised arity option value ~q, expected ~q.' - [ArityF,Arities] ].
+message( predicated_creation_error(File,Alias) ) -->
+     [ 'Closed connection ~q to file ~q due to failure in predicated table creation.' - [Alias,File] ].
+message( connection_already_open(Conn) ) -->
+     [ 'Connection already open ~q.'- [Conn] ].
+message( alias_in_use(Conn,File) ) --> 
+     [ 'Alias/connection ~q already in use for file ~q.'- [Conn,File] ].
+message( not_a_connection(Alias) ) -->
+     [ 'Not an open connection or known alias to a connection: ~q' - [Alias] ].
+message( insufficient_columns(Goal,Op) ) -->
+     [ 'Insufficient number of known column values in ~q for operation ~q.' - [Goal,Op] ].
+message( predicate_already_registered(Conn,Pname,Arity) ) -->
+     [ 'Predicate ~q already registered by connection ~q' - [Pname/Arity,Conn] ].
+message( maps_to_existing_predicate(Pname,Arity) ) -->
+     ['Predicated table maps to existing predicate ~q.' - [Pname/Arity] ].
+message( file_already_open(File,Alias) ) -->
+     ['File, ~q already open with alias ~q.' - [File,Alias] ].
+message( asserting_non_ground(Goal) ) -->
+     [ 'Asserting non ground term ~q.' - [Goal] ].
+message( debug(Format,Args) ) -->
+     [ 'Found Format (1st arg) ~q and Args (2nd arg) ~q.' - [Format,Args] ].
+     
 %-Section sqlite non-specific auxiliary predicates 
 %
 to_list(OptIn, Opts) :-
@@ -424,12 +691,18 @@ dquote( Val, Quoted ) :-
      !,
      Quoted = Val.
 dquote( Val, Quoted ) :-
+     atom( Val ),
+     !,
      atomic_list_concat( ['"',Val,'"'], Quoted ).
+dquote( Val, Quoted ) :-
+     is_list( Val ),
+     append( [0'"|Val], [0'"], QuotedCs ),
+     atom_codes( Quoted, QuotedCs ).
 
 sql_clm_value_pairs_to_where(Known, Where) :-
      sql_clm_value_pairs_to_where_conjunction(Known, Conjunction),
      sql_where_conjunction_to_where(Conjunction, Where).
-     
+
 sql_where_conjunction_to_where('', '' ) :- !.
 sql_where_conjunction_to_where(Conjunction, Where ) :-
      atom_concat( 'Where ', Conjunction, Where ).
@@ -457,3 +730,19 @@ sql_clm_and_val_to_sql_equals_atom(K, V, KVAtm) :-
 sqlite_facet_table( arity(Arity), Connection, Table ) :-
      findall( Column, sqlite_table_column(Connection, Table, Column), Columns ),
      length( Columns, Arity ).
+
+arity_option( Opts, ArityF ) :-
+     memberchk( arity(ArityF), Opts ),
+     arity_flag_values( Arities ),
+     memberchk( ArityF, Arities ),
+     !.
+arity_option( Opts, ArityF ) :-
+     memberchk( arity(ArityF), Opts ),
+     !,
+     sqlite_fail( wrong_arity_value(ArityF) ).
+arity_option( _Opts, arity ). % default for this flag, although we should 
+                             % move all defaults to one location/list (fixme)
+
+kv_decompose( [], [], [] ).
+kv_decompose( [K-V|T], [K|Ks], [V|Vs] ) :-
+     kv_decompose( T, Ks, Vs ).

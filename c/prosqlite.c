@@ -141,6 +141,20 @@ int unify_row_term(term_t row, query_context* context)
   PL_succeed;
 }
 
+static foreign_t c_sqlite_version(term_t ver, term_t datem)
+{
+    term_t tmp = PL_new_term_ref();
+
+    if ( PL_unify_term(tmp,PL_FUNCTOR_CHARS,":",2,PL_INT, 1, PL_INT, 0) &&    // Minor + Fix 
+         PL_unify_term(ver,PL_FUNCTOR_CHARS,":",2,PL_INT, 0, PL_TERM, tmp ) &&   // Major
+         PL_unify_term(datem,PL_FUNCTOR_CHARS,"date",3,PL_INT, 2012, PL_INT, 10, PL_INT, 17) )
+      return TRUE;
+      else
+      return FALSE;
+
+    return FALSE;
+    // PL_unify_term(ver,PL_FUNCTOR_CHARS,":",1,PL_CHARS, 
+}
 
 int raise_sqlite_exception(sqlite3* db)
 {
@@ -199,6 +213,8 @@ int get_query_string(term_t tquery, char** query)
 
 
 // Jan says "You must call PL_free() on the query strings after you are done with them!"
+// fixme: check here or at Prolog that Connection/Alias IS open: otherwise 
+//                        we get sqlite_error(21,library routine called out of sequence)
 static foreign_t c_sqlite_query(term_t connection, term_t query, term_t row,
 				 control_t handle)
 {
@@ -252,7 +268,7 @@ static foreign_t c_sqlite_query(term_t connection, term_t query, term_t row,
                else   {    /* statement is a INSERT/DELETE/UPDATE which do not return anything */
                      context = new_query_context(statement);
                      changes = sqlite3_changes(db);
-                     if (PL_unify_term(tmp,PL_FUNCTOR_CHARS,"affected",1,PL_INT64, (int)changes))
+                     if (PL_unify_term(tmp,PL_FUNCTOR_CHARS,"row",1,PL_INT64, (int)changes))
                         if( !PL_unify(row,tmp) )
                            { free_query_context(context);
                               PL_fail;}
@@ -290,7 +306,7 @@ install_t install_prosqlite()
 {
   row_atom = PL_new_atom("row");
   minus2_functor = PL_new_functor(PL_new_atom("-"), 2);
-
+  PL_register_foreign("c_sqlite_version", 2, c_sqlite_version, 0);
   PL_register_foreign("c_sqlite_connect", 2, c_sqlite_connect, 0);
   PL_register_foreign("c_sqlite_disconnect", 1, c_sqlite_disconnect, 0);
   PL_register_foreign("c_sqlite_query", 3, c_sqlite_query,
