@@ -25,8 +25,13 @@ true.
 ==
 */
 
+:- multifile user:message_poperty/2.
+message_property(debug(sqlite), color([fg(yellow)])).
+
 simple :-
+     write( deleting_file('simple.sqlite') ), nl,
      catch( delete_file('simple.sqlite'), _, true ),
+     debug( sqlite ),
      sqlite_connect( simple, simple, exists(false) ),
      C = 'CREATE TABLE cited_by (pubmed_id bigint(20), ret_date date, citer bigint(20), Primary Key (pubmed_id,citer) );',
      sqlite_query( simple, C, Row ),

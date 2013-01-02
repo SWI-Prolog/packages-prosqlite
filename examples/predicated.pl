@@ -7,7 +7,7 @@ predicated :-
      does_not_exist( Sfile ),
      create_db, 
      interrogate,
-     write( 'Deleting database file.' ), nl,
+     write( 'Deleting database file (phones.sqlite).' ), nl,
      delete_file( Sfile ),
      write( 'Trying to access expired predicate...' ), nl,
      end_bit,
@@ -85,7 +85,8 @@ create( C ) :-
 insert( I ) :-
      I = 'Insert into phones (name, telephone, address) values ("naku","0044","uk");'.
 insert( I ) :-
-     I = 'Insert into phones (name, telephone, address) values ("ozzy","0090","turkey");'.
+     I = 'Insert into phones (name, telephone, address) values ("άμπελος","0090","turkey");'.
+     % I = 'Insert into phones (name, telephone, address) values ("ozzy","0090","turkey");'.
 
 close_db :-
      sqlite_disconnect( phones_db ),

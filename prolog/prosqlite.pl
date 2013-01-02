@@ -44,7 +44,7 @@ also work on YAP Prolog.
 
 
 The easiest way to install on SWI is via the package manager. 
-If you can compile C-code, then simply do 
+Simply do:
 ==
      ?- pack_install( prosqlite ).
 ==
@@ -66,36 +66,21 @@ and proSQLite libraries of SWI-Prolog, as it works on both type of connections.
 ProSQLite is debug/1 aware: call =|debug(sqlite)|= to see what is sent to 
 the sqlite engine.
 
-There are MS wins DLLs included  in the sources. However the package manager of SWI 6.3.2 
-cannot currently cope with these. The DLLs are at the correct location so with any luck the
-next version of the manager will install these correctly.
+There are MS wins DLLs included  in the sources and recent version of the SWI package
+manager will install these properly.
 
-In the meantime, take the sources from 
+If you want to install from source on MS windows, point your browser to
 ==
 http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.1.0.tgz
 or
 http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.1.0.zip
 ==
 
-and 
-
-if you run a 32 bit prolog do, 
-
-     * copy the dll files  from  lib/i386-win32/ to swipl/bin/
-     * and prolog file prolog/prosqlite.pl to swipl/library/
-
-
-If you are running  a 64 bit SWI executable do: 
-     * copy the dll files  from  lib/i386-win32/ to swipl/bin/
-     * and prolog file prolog/prosqlite.pl to swipl/library/
-
-That's it.
-
-
      @version 0.1.0, 2012/10/17
      @license	Perl Artistic License
      @author Nicos Angelopoulos
      @author Sander Canisius
+     @see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels. proSQLite: Prolog file based databases via an SQLite interface.  In the proceedings of Practical Aspects of Declarative languages (PADL 2013), (2013, Rome, Italy).
      @see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels.  Exploring file based databases via an Sqlite interface.  In the ICLP Workshop on Logic-based methods in Programming Environments, p. 2-9, (2012, Budapest, Hungary).
      @see http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf
      @see http://bioinformatics.nki.nl/~nicos/sware/prosqlite
@@ -135,6 +120,21 @@ sqlite_binary_version( Ver, Date ) :-
 % Succeeds once for each publication related to this library. Atom is the atom representation
 % suitable for printing while Bibterm is a bibtex(Type,Key,Pairs) term of the same publication.
 % Produces all related publications on backtracking.
+sqlite_citation( Atom, bibtex(Type,Key,Pairs) ) :-
+     Atom = 'Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels. proSQLite: Prolog file based databases via an SQLite interface.  In the proceedings of Practical Aspects of Declarative languages (PADL 2013), (2013, Rome, Italy).',
+     Type = inproceedings,
+     Key  = 'CanisiusS+2013',
+     Pairs = [
+          author = 'Sander Canisius and Nicos Angelopoulos and Lodewyk Wessels',
+          title  = 'Exploring file based databases via an Sqlite interface',
+          booktitle = 'In ICLP Workshop on Logic-based methods in Programming Environments (WLPE\'12)',
+          year = 2012,
+          pages= '2-9',
+          month = 'September',
+          address = 'Budapest, Hungary',
+          url     = 'http://bioinformatics.nki.nl/~nicos/pbs/padl2013-prosqlite.pdf'
+     ].
+     
 sqlite_citation( Atom, bibtex(Type,Key,Pairs) ) :-
      Atom = 'Exploring file based databases via an Sqlite interface. \n Canisius Sander, Nicos Angelopoulos and Lodewyk Wessels \n In the ICLP Workshop on Logic-based methods in Programming Environments (WLPE\'12),\n p.2-9, 2012. Budapest, Hungary.',
      Type = inproceedings,
