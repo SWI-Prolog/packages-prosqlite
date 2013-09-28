@@ -120,7 +120,13 @@ int unify_row_term(term_t row, query_context* context)
       break;
 
     case SQLITE_TEXT:
-      PL_put_atom_chars(col_term, sqlite3_column_text(context->statement, i));
+	 			 if (sqlite3_column_bytes(context->statement,i))
+					PL_put_atom_chars(col_term, sqlite3_column_text(context->statement, i));
+				else
+					// this should probably never be the case (should be SQLITE_NULL) but firefox's places.sqlite
+					// has 0 length texts
+					PL_put_atom_chars(col_term, "" );
+
       break;
 
     case SQLITE_BLOB:
@@ -131,6 +137,14 @@ int unify_row_term(term_t row, query_context* context)
     case SQLITE_NULL:
       // TODO: what about this?
       // PL_put_nil?
+		 if (sqlite3_column_bytes(context->statement,i))
+					// this should probably never be the case (should be SQLITE_TEXT?) but firefox's places.sqlite
+					// has non 0 length nulls
+					PL_put_atom_chars(col_term, sqlite3_column_text(context->statement, i));
+				else
+					// PL_put_nil(col_term)  // would be more correct probably
+					PL_put_atom_chars(col_term, "" );
+
       break;
     }
 
