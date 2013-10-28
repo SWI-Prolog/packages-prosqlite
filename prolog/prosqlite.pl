@@ -209,6 +209,9 @@ Options is a sinlge term or a list of terms from the following:
         * ext(Ext)                database files are assumed to have an sqlite extension at their end.
                                   To ovewrite this give Ext ('' for no extension).
 
+        * verbose(Verb)           Iff Verb==true printa message about which file is used- from within C (false).
+
+
 When unary predicates are defined the columns can be interrogated/accessed by list pairs of the form Column=Value.
 Column-Value and Column:Value are also recognised. 
 
@@ -265,7 +268,12 @@ sqlite_connect_1(File, Alias, Opts) :-
           ;
           true
      ),
-     c_sqlite_connect(File, Conn),
+	( (memberchk(verbose(Verb),Opts),Verb==true) -> 
+		Verb = true
+		;
+		Verb = false
+	),
+     c_sqlite_connect(File, Verb, Conn),
      asserta( sqlite_connection(Alias,File,Conn) ),
      ( sqlite_establish_predicates(Opts, Conn) ->
           true
