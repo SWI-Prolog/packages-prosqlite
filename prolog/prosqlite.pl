@@ -368,7 +368,15 @@ sqlite_format_query(Alias, Format-Arguments, Row) :-
 %  Return or interrogate tables in the Sqlite database associated with Connection.
 %
 sqlite_current_table(Alias, Table) :-
+	var( Table ),
+	!,
 	sqlite_query(Alias, 'SELECT name FROM sqlite_master WHERE type = "table"', row(Table)).
+sqlite_current_table(Alias, Table) :-
+	ground( Table ),
+	sqlite_query(Alias, 'SELECT name FROM sqlite_master WHERE type = "table"', row(TableIn)),
+	%13.10.26: have a look at the C code above to see if 'row(Table)' can work on the above line.
+	Table = TableIn,
+	!.
 
 %% sqlite_current_table(+Connection, ?Table, -Facet ).
 %
