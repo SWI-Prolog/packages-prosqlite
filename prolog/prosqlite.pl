@@ -261,11 +261,11 @@ sqlite_connect_1(File, Alias, Opts) :-
           true
      ),
 	( (memberchk(verbose(Verb),Opts),Verb==true) -> 
-		Verb = true
+          print_message( informational, sqlite(db_at(File)) )
 		;
-		Verb = false
+		true
 	),
-     c_sqlite_connect(File, Verb, Conn),
+     c_sqlite_connect(File, Conn),
      asserta( sqlite_connection(Alias,File,Conn) ),
      ( sqlite_establish_predicates(Opts, Conn) ->
           true
@@ -681,6 +681,8 @@ message( maps_to_existing_predicate(Pname,Arity) ) -->
      ['Predicated table maps to existing predicate ~q.' - [Pname/Arity] ].
 message( file_already_open(File,Alias) ) -->
      ['File, ~q already open with alias ~q.' - [File,Alias] ].
+message( db_at(File) ) -->
+     ['Using database from file: ~q.' - [File] ].
 message( asserting_non_ground(Goal) ) -->
      [ 'Asserting non ground term ~q.' - [Goal] ].
 message( debug(Format,Args) ) -->

@@ -30,20 +30,12 @@ PL_blob_t PL_SQLite_Connection = {
 };
 
 
-static foreign_t c_sqlite_connect(term_t filename, atom_t verb, term_t connection)
+static foreign_t c_sqlite_connect(term_t filename, term_t connection)
 {
   char *filename_c;
-  atom_t verb_c;
-
 
   if (PL_get_atom_chars(filename, &filename_c))
   {
-  		if (!PL_get_atom(verb, &verb_c)) {
-  	 		verb_c = ATOM_false;
-	 }
-  		if (verb_c == ATOM_true) {
-    		printf("Using database at: %s\n", filename_c);
-			}
     sqlite3* handle;
     if (sqlite3_open(filename_c, &handle) == SQLITE_OK)
     {
@@ -335,7 +327,7 @@ install_t install_prosqlite()
   row_atom = PL_new_atom("row");
   minus2_functor = PL_new_functor(PL_new_atom("-"), 2);
   PL_register_foreign("c_sqlite_version", 2, c_sqlite_version, 0);
-  PL_register_foreign("c_sqlite_connect", 3, c_sqlite_connect, 0);
+  PL_register_foreign("c_sqlite_connect", 2, c_sqlite_connect, 0);
   PL_register_foreign("c_sqlite_disconnect", 1, c_sqlite_disconnect, 0);
   PL_register_foreign("c_sqlite_query", 3, c_sqlite_query,
 		      PL_FA_NONDETERMINISTIC);
