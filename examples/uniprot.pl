@@ -3,7 +3,7 @@
 
 :- nl, nl, nl.
 :- write( 'To get the example database used in this examples do:' ), nl.
-:- write( 'wget http://bioinformatics.nki.nl/~nicos/sware/sqlite/uniprot.sqlite' ), nl.
+:- write( 'wget http://stoics.org.uk/~nicos/sware/sqlite/uniprot.sqlite' ), nl.
 :- nl, nl.
 
 :- use_module( library(prosqlite) ).
@@ -13,7 +13,7 @@
 Look at the sources for the difference predicate calls.
 
 You need the test database from 
-               http://bioinformatics.nki.nl/~nicos/sware/sqlite/uniprot.sqlite
+               http://stoics.org.uk/~nicos/sware/sqlite/uniprot.sqlite
 
 The output should look like:
 
@@ -65,9 +65,9 @@ true.
 
 
 ==
-     @version 0.1.0, 2012/10/17 
-     @see latest version at http://bioinformatics.nki.nl/~nicos/sware/prosqlite/uniprot.pl
-     @see also http://bioinformatics.nki.nl/~nicos/sware/sqlite/uniprot.sqlite (184Mb)
+     @version 0.1.2, 2013/11/1 
+     @see latest version at http://stoics.org.uk/~nicos/sware/prosqlite/uniprot.pl
+     @see also http://stoics.org.uk/~nicos/sware/sqlite/uniprot.sqlite (184Mb)
 
 */
 
@@ -77,7 +77,7 @@ true.
 Test predicate for prosqlite. Tests all components.
 
 You need the test database from 
-               http://bioinformatics.nki.nl/~nicos/sware/sqlite/uniprot.sqlite
+               http://stoics.org.uk/~nicos/sware/sqlite/uniprot.sqlite
 
 
 */

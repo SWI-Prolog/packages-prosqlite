@@ -71,24 +71,23 @@ manager will install these properly.
 
 If you want to install from source on MS windows, point your browser to
 ==
-http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.1.0.tgz
+http://stoics.org.uk/~nicos/sware/prosqlite/prosqlite-0.1.2.tgz
 or
-http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.1.0.zip
+http://stoics.org.uk/~nicos/sware/prosqlite/prosqlite-0.1.2.zip
 ==
 
-     @version 0.1.0, 2012/10/17
+     @version 0.1.2, 2013/11/1
      @license	Perl Artistic License
      @author Nicos Angelopoulos
      @author Sander Canisius
      @see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels. proSQLite: Prolog file based databases via an SQLite interface.  In the proceedings of Practical Aspects of Declarative languages (PADL 2013), (2013, Rome, Italy).
      @see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels.  Exploring file based databases via an Sqlite interface.  In the ICLP Workshop on Logic-based methods in Programming Environments, p. 2-9, (2012, Budapest, Hungary).
-     @see http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf
-     @see http://bioinformatics.nki.nl/~nicos/sware/prosqlite
-     @see http://bioinformatics.nki.nl/~nicos/sware/db_facts
+     @see http://stoics.org.uk/~nicos/pbs/wlpe2012_sqlite.pdf
+     @see http://stoics.org.uk/~nicos/sware/prosqlite
+     @see http://stoics.org.uk/~nicos/sware/db_facts
      @see http://www.sqlite.org/
      @see files in examples/ directory
      @see also available as a SWI pack http://www.swi-prolog.org/pack/list
-     @see sources at http://bioinformatics.nki.nl/~nicos/sware/prosqlite/prosqlite-0.1.0.tgz
 
      @tbd set pragmas
 
@@ -106,7 +105,7 @@ arity_flag_values( [arity,unary,both,palette] ).
 %% sqlite_version( -Version, -Date ).
 %  The current version. Version is a Mj:Mn:Fx term, and date is a date(Y,M,D) term.
 %
-sqlite_version( 0:1:0, date(2012,10,17) ).
+sqlite_version( 0:1:2, date(2013,11,1) ).
 
 %% sqlite_binary_version( -Version, -Date ).
 %  The current version of the binaries. If the installed binaries are not compiled from
@@ -132,7 +131,7 @@ sqlite_citation( Atom, bibtex(Type,Key,Pairs) ) :-
           pages= '2-9',
           month = 'September',
           address = 'Budapest, Hungary',
-          url     = 'http://bioinformatics.nki.nl/~nicos/pbs/padl2013-prosqlite.pdf'
+          url     = 'http://stoics.org.uk/~nicos/pbs/padl2013-prosqlite.pdf'
      ].
      
 sqlite_citation( Atom, bibtex(Type,Key,Pairs) ) :-
@@ -147,7 +146,7 @@ sqlite_citation( Atom, bibtex(Type,Key,Pairs) ) :-
           pages= '2-9',
           month = 'September',
           address = 'Budapest, Hungary',
-          url     = 'http://bioinformatics.nki.nl/~nicos/pbs/wlpe2012_sqlite.pdf'
+          url     = 'http://stoics.org.uk/~nicos/pbs/wlpe2012_sqlite.pdf'
      ].
 
 

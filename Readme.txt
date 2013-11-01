@@ -33,7 +33,7 @@ The publication corresponding to this library is :
 
 
 
-Nicos Angelopoulos, August 2012
+Nicos Angelopoulos, November 2013. (0.1.0 @ August 2012)
 ---
-http://bioinformatics.nki.nl/~nicos/
+http://stoics.org.uk/~nicos/
 nicos_mlists_06@yahoo.co.uk

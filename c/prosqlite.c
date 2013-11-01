@@ -169,9 +169,9 @@ static foreign_t c_sqlite_version(term_t ver, term_t datem)
 {
     term_t tmp = PL_new_term_ref();
 
-    if ( PL_unify_term(tmp,PL_FUNCTOR_CHARS,":",2,PL_INT, 1, PL_INT, 0) &&    // Minor + Fix 
+    if ( PL_unify_term(tmp,PL_FUNCTOR_CHARS,":",2,PL_INT, 1, PL_INT, 2) &&    // Minor + Fix 
          PL_unify_term(ver,PL_FUNCTOR_CHARS,":",2,PL_INT, 0, PL_TERM, tmp ) &&   // Major
-         PL_unify_term(datem,PL_FUNCTOR_CHARS,"date",3,PL_INT, 2012, PL_INT, 10, PL_INT, 17) )
+         PL_unify_term(datem,PL_FUNCTOR_CHARS,"date",3,PL_INT, 2013, PL_INT, 11, PL_INT, 1) )
       return TRUE;
       else
       return FALSE;
