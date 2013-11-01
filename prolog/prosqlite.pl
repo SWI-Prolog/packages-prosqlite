@@ -69,27 +69,20 @@ the sqlite engine.
 There are MS wins DLLs included  in the sources and recent version of the SWI package
 manager will install these properly.
 
-If you want to install from source on MS windows, point your browser to
-==
-http://stoics.org.uk/~nicos/sware/prosqlite/prosqlite-0.1.2.tgz
-or
-http://stoics.org.uk/~nicos/sware/prosqlite/prosqlite-0.1.2.zip
-==
+@version 0.1.2, 2013/11/1
+@license	Perl Artistic License
+@author Nicos Angelopoulos
+@author Sander Canisius
+@see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels. proSQLite: Prolog file based databases via an SQLite interface.  In the proceedings of Practical Aspects of Declarative languages (PADL 2013), (2013, Rome, Italy).
+@see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels.  Exploring file based databases via an Sqlite interface.  In the ICLP Workshop on Logic-based methods in Programming Environments, p. 2-9, (2012, Budapest, Hungary).
+@see http://stoics.org.uk/~nicos/pbs/wlpe2012_sqlite.pdf
+@see http://stoics.org.uk/~nicos/sware/prosqlite
+@see http://stoics.org.uk/~nicos/sware/db_facts
+@see http://www.sqlite.org/
+@see files in examples/ directory
+@see also available as a SWI pack http://www.swi-prolog.org/pack/list
 
-     @version 0.1.2, 2013/11/1
-     @license	Perl Artistic License
-     @author Nicos Angelopoulos
-     @author Sander Canisius
-     @see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels. proSQLite: Prolog file based databases via an SQLite interface.  In the proceedings of Practical Aspects of Declarative languages (PADL 2013), (2013, Rome, Italy).
-     @see Sander Canisius, Nicos Angelopoulos and Lodewyk Wessels.  Exploring file based databases via an Sqlite interface.  In the ICLP Workshop on Logic-based methods in Programming Environments, p. 2-9, (2012, Budapest, Hungary).
-     @see http://stoics.org.uk/~nicos/pbs/wlpe2012_sqlite.pdf
-     @see http://stoics.org.uk/~nicos/sware/prosqlite
-     @see http://stoics.org.uk/~nicos/sware/db_facts
-     @see http://www.sqlite.org/
-     @see files in examples/ directory
-     @see also available as a SWI pack http://www.swi-prolog.org/pack/list
-
-     @tbd set pragmas
+@tbd set pragmas
 
 */
 
