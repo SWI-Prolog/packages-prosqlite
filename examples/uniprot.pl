@@ -1,9 +1,9 @@
-:- module( uniprot, [uniprot/0] ).
+- module( uniprot, [uniprot/0] ).
 
 
 :- nl, nl, nl.
 :- write( 'To get the example database used in this examples do:' ), nl.
-:- write( 'wget http://stoics.org.uk/~nicos/sware/sqlite/uniprot.sqlite' ), nl.
+:- write( 'wget http://stoics.org.uk/~nicos/sware/prosqlite/uniprot.sqlite' ), nl.
 :- nl, nl.
 
 :- use_module( library(prosqlite) ).
@@ -13,7 +13,7 @@
 Look at the sources for the difference predicate calls.
 
 You need the test database from 
-               http://stoics.org.uk/~nicos/sware/sqlite/uniprot.sqlite
+               http://stoics.org.uk/~nicos/sware/prosqlite/uniprot.sqlite
 
 The output should look like:
 
@@ -67,7 +67,7 @@ true.
 ==
      @version 0.1.2, 2013/11/1 
      @see latest version at http://stoics.org.uk/~nicos/sware/prosqlite/uniprot.pl
-     @see also http://stoics.org.uk/~nicos/sware/sqlite/uniprot.sqlite (184Mb)
+     @see also http://stoics.org.uk/~nicos/sware/prosqlite/uniprot.sqlite (184Mb)
 
 */
 
@@ -77,7 +77,7 @@ true.
 Test predicate for prosqlite. Tests all components.
 
 You need the test database from 
-               http://stoics.org.uk/~nicos/sware/sqlite/uniprot.sqlite
+               http://stoics.org.uk/~nicos/sware/prosqlite/uniprot.sqlite
 
 
 */
